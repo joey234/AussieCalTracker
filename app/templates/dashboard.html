@@ -119,13 +119,22 @@
         .nav-links a:hover {
             text-decoration: underline;
         }
+        .home-link {
+            color: #3498db;
+            text-decoration: none;
+            margin-right: auto;
+        }
+        .home-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="nav-links">
+            <a href="{{ url_for('main.index') }}" class="home-link">Home</a>
             <span>Welcome, {{ current_user.username }}!</span>
-            <a href="{{ url_for('logout') }}">Logout</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
         </div>
 
         <div class="header">
@@ -157,10 +166,22 @@
                     <div class="food-details">
                         Calories: {{ entry.calories }} kcal<br>
                         Serving: {{ entry.serving_size }}<br>
-                        Time: {{ entry.timestamp.strftime('%I:%M %p') }}
+                        Time: {{ entry.timestamp.strftime('%I:%M %p') }}<br>
+                        {% if entry.description %}
+                        Description: {{ entry.description }}<br>
+                        {% endif %}
+                        {% if entry.australian_brands %}
+                        Australian Brands: {{ entry.australian_brands|join(', ') }}<br>
+                        {% endif %}
+                        {% if entry.suggestions %}
+                        Suggestions: {{ entry.suggestions|join(', ') }}<br>
+                        {% endif %}
+                        {% if entry.is_australian %}
+                        <span class="aussie-badge">🇦🇺 Australian Dish</span>
+                        {% endif %}
                     </div>
                 </div>
-                <form method="POST" action="{{ url_for('delete_entry', entry_id=entry.id) }}" style="display: inline;">
+                <form method="POST" action="{{ url_for('main.delete_entry', entry_id=entry.id) }}" style="display: inline;">
                     <button type="submit" class="delete-btn">Delete</button>
                 </form>
             </div>
@@ -189,19 +210,27 @@
                 const formData = new FormData();
                 formData.append('file', file);
 
-                fetch('/analyze', {
+                fetch("{{ url_for('main.analyze_image') }}", {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
                     loading.style.display = 'none';
                     // Reload page to show new entry
                     window.location.reload();
                 })
                 .catch(error => {
                     loading.style.display = 'none';
-                    alert('Error analyzing image. Please try again.');
+                    alert('Error: ' + error.message);
                     console.error('Error:', error);
                 });
             }

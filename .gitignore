@@ -39,6 +39,9 @@ instance/
 # Project specific
 uploads/
 .env
+.env.local
+.env.*
+!.env.example
 
 # macOS
 .DS_Store

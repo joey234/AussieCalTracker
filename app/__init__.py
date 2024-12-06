@@ -2,14 +2,21 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import Config
+import os
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
 def create_app(config_class=Config):
-    app = Flask(__name__)
+    app = Flask(__name__,
+                template_folder='templates',  # Look for templates in app/templates
+                static_folder='static')       # Look for static files in app/static
+    
     app.config.from_object(config_class)
+    
+    # Initialize configuration
+    config_class.init_app(app)
 
     # Initialize extensions
     db.init_app(app)
@@ -19,11 +26,6 @@ def create_app(config_class=Config):
     from app.routes import auth_bp, main_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
-
-    # Ensure the upload folder exists
-    import os
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
 
     # Create database tables
     with app.app_context():
